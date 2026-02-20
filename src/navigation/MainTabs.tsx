@@ -1,34 +1,60 @@
 ﻿import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { DashboardScreen } from "../features/dashboard/DashboardScreen";
-import { ProjectsScreen } from "../features/projects/ProjectsScreen";
-import { TasksScreen } from "../features/tasks/TasksScreen";
-import { TeamScreen } from "../features/team/TeamScreen";
-import { NotificationsScreen } from "../features/notifications/NotificationsScreen";
-import { SettingsScreen } from "../features/settings/SettingsScreen";
 import { MainTabsParamList } from "./types";
-import { colors } from "../core/theme/colors";
+import { DashboardScreen } from "../features/dashboard/DashboardScreen";
 import { CRMNavigator } from "../modules/crm/CRMNavigator";
-import { BillingNavigator } from "../modules/billing/BillingNavigator";
-const Tabs = createBottomTabNavigator<MainTabsParamList>();
+import { SettingsScreen } from "../features/settings/SettingsScreen";
+import { MessagingScreen } from "../features/messaging/MessagingScreen";
+import { InvoicesScreen } from "../features/invoices/InvoicesScreen";
+import { TimelineScreen } from "../features/timeline/TimelineScreen";
+import { AuditLogsScreen } from "../features/audit/AuditLogsScreen";
+import { Text } from "react-native";
+const Tab = createBottomTabNavigator<MainTabsParamList>();
 export function MainTabs() {
   return (
-    <Tabs.Navigator
+    <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarStyle: { backgroundColor: "#1f2937" },
+        tabBarActiveTintColor: "#3b82f6",
+        tabBarInactiveTintColor: "#9ca3af",
       }}
     >
-      <Tabs.Screen name="Dashboard" component={DashboardScreen} />
-      <Tabs.Screen name="CRM" component={CRMNavigator} />
-      <Tabs.Screen name="Projects" component={ProjectsScreen} />
-      <Tabs.Screen name="Tasks" component={TasksScreen} />
-      <Tabs.Screen name="Team" component={TeamScreen} />
-      <Tabs.Screen name="Finance" component={BillingNavigator} />
-      <Tabs.Screen name="Notifications" component={NotificationsScreen} />
-      <Tabs.Screen name="Settings" component={SettingsScreen} />
-    </Tabs.Navigator>
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ tabBarLabel: "Dashboard", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🏠</Text> }}
+      />
+      <Tab.Screen
+        name="CRM"
+        component={CRMNavigator}
+        options={{ tabBarLabel: "CRM", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>👥</Text> }}
+      />
+      <Tab.Screen
+        name="Messages"
+        component={MessagingScreen}
+        options={{ tabBarLabel: "Messages", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>💬</Text> }}
+      />
+      <Tab.Screen
+        name="Invoices"
+        component={InvoicesScreen}
+        options={{ tabBarLabel: "Factures", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>🧾</Text> }}
+      />
+      <Tab.Screen
+        name="Timeline"
+        component={TimelineScreen}
+        options={{ tabBarLabel: "Timeline", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>📅</Text> }}
+      />
+      <Tab.Screen
+        name="AuditLogs"
+        component={AuditLogsScreen}
+        options={{ tabBarLabel: "Audit", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>📋</Text> }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ tabBarLabel: "Parametres", tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 18 }}>⚙️</Text> }}
+      />
+    </Tab.Navigator>
   );
 }

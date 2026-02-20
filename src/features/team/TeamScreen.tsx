@@ -1,9 +1,8 @@
 ﻿import React from "react";
 import { FlatList, StyleSheet, Text } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { ERPHeader } from "../../core/components/ERPHeader";
 import { Card } from "../../core/components/Card";
-import { Screen } from "../../core/layout/Screen";
+import { ErpLayout } from "../../core/layout/ErpLayout";
 import { colors } from "../../core/theme/colors";
 import { supabase } from "../../services/supabase";
 import { useCompanyId } from "../../hooks/useCompany";
@@ -24,8 +23,7 @@ export function TeamScreen() {
     enabled: !!companyId,
   });
   return (
-    <Screen>
-      <ERPHeader title="Team" subtitle="Employees" />
+    <ErpLayout title="Team">
       {query.isLoading && <Text style={styles.state}>Loading...</Text>}
       {query.isError && <Text style={styles.state}>Error loading employees</Text>}
       <FlatList
@@ -39,12 +37,12 @@ export function TeamScreen() {
         )}
         ListEmptyComponent={!query.isLoading ? <Text style={styles.state}>No employees</Text> : null}
       />
-    </Screen>
+    </ErpLayout>
   );
 }
 const styles = StyleSheet.create({
-  card: { margin: 12 },
+  card: { marginBottom: 10 },
   title: { color: colors.text, fontWeight: "700" },
   muted: { color: colors.muted },
-  state: { color: colors.muted, padding: 16 },
+  state: { color: colors.muted },
 });

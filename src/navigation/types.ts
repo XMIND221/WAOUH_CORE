@@ -1,18 +1,24 @@
 ﻿export type RootStackParamList = {
-  Splash: undefined;
   Login: undefined;
+  ForgotPassword: undefined;
+  ChangePassword: undefined;
   MainTabs: undefined;
+  Admin: undefined;
+  Dashboard: undefined;
+  CRM: undefined;
+  Messages: undefined;
+  Invoices: undefined;
   Timeline: undefined;
-  Audit: undefined;
+  AuditLogs: undefined;
   Security: undefined;
+  Settings: undefined;
 };
 export type MainTabsParamList = {
   Dashboard: undefined;
   CRM: undefined;
-  Projects: undefined;
-  Tasks: undefined;
-  Team: undefined;
-  Finance: undefined;
-  Notifications: undefined;
+  Messages: undefined;
+  Invoices: undefined;
+  Timeline: undefined;
+  AuditLogs: undefined;
   Settings: undefined;
 };

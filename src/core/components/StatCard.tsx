@@ -11,15 +11,17 @@ export function StatCard({ label, value, accent = colors.primary }: Props) {
   return (
     <View style={[styles.card, { borderLeftColor: accent }]}>
       <Text style={[typography.small, styles.label]}>{label}</Text>
-      <Text style={[typography.h2, { color: accent }]}>{value}</Text>
+      <Text style={[typography.section, { color: accent }]}>{value}</Text>
     </View>
   );
 }
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderLeftWidth: 4,
   },
   label: { color: colors.muted, marginBottom: 6 },

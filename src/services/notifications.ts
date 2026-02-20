@@ -5,6 +5,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 export async function registerForPushNotificationsAsync() {
@@ -24,3 +26,4 @@ export async function registerForPushNotificationsAsync() {
   }
   return token;
 }
+

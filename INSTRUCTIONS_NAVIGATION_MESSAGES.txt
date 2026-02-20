@@ -1,0 +1,38 @@
+﻿// ============================================
+// INSTRUCTIONS - Ajouter la messagerie à la navigation
+// ============================================
+// 1. Mettre à jour src/navigation/types.ts
+export type RootStackParamList = {
+  Login: undefined;
+  ChangePassword: undefined;
+  MainTabs: undefined;
+  Admin: undefined;
+  Timeline: undefined;
+  Audit: undefined;
+  Security: undefined;
+  ChatScreen: { conversationId: string };  // <-- AJOUTER
+};
+export type MainTabsParamList = {
+  Dashboard: undefined;
+  CRM: undefined;
+  Projects: undefined;
+  Tasks: undefined;
+  Team: undefined;
+  Finance: undefined;
+  Messages: undefined;  // <-- AJOUTER
+  Notifications: undefined;
+  Settings: undefined;
+};
+// 2. Mettre à jour src/navigation/MainTabs.tsx
+import { MessagesListScreen } from "../features/messages";  // <-- AJOUTER
+// Dans le Tabs.Navigator, ajouter:
+<Tabs.Screen name="Messages" component={MessagesListScreen} />
+// 3. Mettre à jour src/navigation/RootNavigator.tsx
+import { ChatScreen } from "../features/messages";  // <-- AJOUTER
+// Dans le Stack.Navigator (après MainTabs), ajouter:
+<Stack.Screen 
+  name="ChatScreen" 
+  component={ChatScreen}
+  options={{ headerShown: true, title: "Conversation" }}
+/>
+// Ensuite exécuter: npm start

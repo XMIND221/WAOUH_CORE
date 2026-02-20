@@ -1,50 +1,91 @@
-﻿import React from "react";
-import { FlatList, StyleSheet, Text } from "react-native";
-import { useQuery } from "@tanstack/react-query";
-import { ERPHeader } from "../../core/components/ERPHeader";
-import { Card } from "../../core/components/Card";
-import { Screen } from "../../core/layout/Screen";
+// TODO: Extension WAOUH CORE - voir cahier des charges Enterprise
+import React from "react";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import { ErpLayout } from "../../core/layout/ErpLayout";
 import { colors } from "../../core/theme/colors";
-import { supabase } from "../../services/supabase";
-import { useCompanyId } from "../../hooks/useCompany";
-async function fetchNotifications(companyId: string) {
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("company_id", companyId)
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  return data ?? [];
-}
+import { useNotifications } from "./hooks/useNotifications";
+import { NotificationCard } from "./components/NotificationCard";
 export function NotificationsScreen() {
-  const companyId = useCompanyId();
-  const query = useQuery({
-    queryKey: ["notifications", companyId],
-    queryFn: () => fetchNotifications(companyId as string),
-    enabled: !!companyId,
-  });
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications();
+  const handlePress = async (notificationId: string, isRead: boolean) => {
+    if (!isRead) {
+      await markAsRead(notificationId);
+    }
+  };
+  if (isLoading) {
+    return (
+      <ErpLayout title="Notifications">
+        <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+      </ErpLayout>
+    );
+  }
   return (
-    <Screen>
-      <ERPHeader title="Notifications" subtitle="In-app" />
-      {query.isLoading && <Text style={styles.state}>Loading...</Text>}
-      {query.isError && <Text style={styles.state}>Error loading notifications</Text>}
-      <FlatList
-        data={query.data ?? []}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Card style={styles.card}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.muted}>{item.body}</Text>
-          </Card>
+    <ErpLayout title="Notifications">
+      <View style={styles.container}>
+        {unreadCount > 0 && (
+          <View style={styles.header}>
+            <Text style={styles.headerText}>{unreadCount} non lue(s)</Text>
+            <TouchableOpacity onPress={() => markAllAsRead()}>
+              <Text style={styles.markAllButton}>Tout marquer comme lu</Text>
+            </TouchableOpacity>
+          </View>
         )}
-        ListEmptyComponent={!query.isLoading ? <Text style={styles.state}>No notifications</Text> : null}
-      />
-    </Screen>
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, index }) => (
+            <NotificationCard
+              notification={item}
+              onPress={() => handlePress(item.id, item.is_read)}
+              index={index}
+            />
+          )}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>Aucune notification</Text>
+            </View>
+          }
+        />
+      </View>
+    </ErpLayout>
   );
 }
 const styles = StyleSheet.create({
-  card: { margin: 12 },
-  title: { color: colors.text, fontWeight: "700" },
-  muted: { color: colors.muted },
-  state: { color: colors.muted, padding: 16 },
+  container: {
+    flex: 1,
+  },
+  loader: {
+    marginTop: 100,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  markAllButton: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: "500",
+  },
+  list: {
+    padding: 16,
+  },
+  empty: {
+    padding: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    color: colors.muted,
+    fontSize: 16,
+  },
 });

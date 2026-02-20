@@ -1,9 +1,8 @@
 ﻿import React from "react";
 import { FlatList, StyleSheet, Text } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { ERPHeader } from "../../core/components/ERPHeader";
 import { Card } from "../../core/components/Card";
-import { Screen } from "../../core/layout/Screen";
+import { ErpLayout } from "../../core/layout/ErpLayout";
 import { colors } from "../../core/theme/colors";
 import { supabase } from "../../services/supabase";
 import { useCompanyId } from "../../hooks/useCompany";
@@ -24,8 +23,7 @@ export function AuditScreen() {
     enabled: !!companyId,
   });
   return (
-    <Screen>
-      <ERPHeader title="Audit Logs" subtitle="Actions" />
+    <ErpLayout title="Audit Logs">
       {query.isLoading && <Text style={styles.state}>Loading...</Text>}
       {query.isError && <Text style={styles.state}>Error loading logs</Text>}
       <FlatList
@@ -34,16 +32,17 @@ export function AuditScreen() {
         renderItem={({ item }) => (
           <Card style={styles.card}>
             <Text style={styles.title}>{item.action}</Text>
-            <Text style={styles.muted}>{item.entity}</Text>
+            <Text style={styles.muted}>{item.resource_type}</Text>
           </Card>
         )}
+        ListEmptyComponent={!query.isLoading ? <Text style={styles.state}>No logs</Text> : null}
       />
-    </Screen>
+    </ErpLayout>
   );
 }
 const styles = StyleSheet.create({
-  card: { margin: 12 },
+  card: { marginBottom: 10 },
   title: { color: colors.text, fontWeight: "700" },
   muted: { color: colors.muted },
-  state: { color: colors.muted, padding: 16 },
+  state: { color: colors.muted },
 });

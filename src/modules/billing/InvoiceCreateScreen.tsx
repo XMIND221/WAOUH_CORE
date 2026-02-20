@@ -120,7 +120,7 @@ export function InvoiceCreateScreen() {
         <Text style={styles.link}>Add item</Text>
       </Pressable>
       <Text style={styles.total}>Total: {total}</Text>
-      <Button label={mutation.isLoading ? "Saving..." : "Create"} onPress={() => mutation.mutate()} />
+      <Button label={mutation.isPending ? "Saving..." : "Create"} onPress={() => mutation.mutate()} />
       {mutation.isError && <Text style={styles.error}>Error creating invoice</Text>}
     </Screen>
   );
@@ -134,3 +134,4 @@ const styles = StyleSheet.create({
   clientList: { backgroundColor: colors.surface, padding: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
   clientItem: { color: colors.text, paddingVertical: 4 },
 });
+

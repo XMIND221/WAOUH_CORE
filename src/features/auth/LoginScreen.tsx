@@ -1,4 +1,5 @@
-﻿import React, { useState } from "react";
+// TODO: Extension WAOUH CORE - voir cahier des charges Enterprise
+import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Button } from "../../core/components/Button";
 import { colors } from "../../core/theme/colors";
