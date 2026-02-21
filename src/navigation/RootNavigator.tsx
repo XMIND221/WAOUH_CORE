@@ -17,8 +17,28 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function RootNavigator() {
   const { user, isLoading, bootstrap, userProfile } = useAuthStore();
   useEffect(() => {
-    bootstrap();
-  }, []);
+    let alive = true;
+    const run = async () => {
+      try {
+        await Promise.resolve(bootstrap());
+      } catch (e) {
+        console.error("[RootNavigator] bootstrap failed:", e);
+      } finally {
+        if (alive) useAuthStore.setState({ isLoading: false });
+      }
+    };
+    const timeout = setTimeout(() => {
+      if (alive) {
+        console.warn("[RootNavigator] bootstrap timeout -> force stop loading");
+        useAuthStore.setState({ isLoading: false });
+      }
+    }, 7000);
+    run();
+    return () => {
+      alive = false;
+      clearTimeout(timeout);
+    };
+  }, [bootstrap]);
   if (isLoading) {
     return (
       <View style={styles.loader}>
@@ -30,7 +50,7 @@ export default function RootNavigator() {
     <NavigationContainer>
       {user ? (
         <RoleProvider>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Navigator id="root-app-stack" screenOptions={{ headerShown: false }}>
             {userProfile?.must_change_password ? (
               <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
             ) : (
@@ -50,7 +70,7 @@ export default function RootNavigator() {
           </Stack.Navigator>
         </RoleProvider>
       ) : (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator id="root-guest-stack" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>
       )}

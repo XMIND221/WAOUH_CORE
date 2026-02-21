@@ -11,10 +11,11 @@ export type BillingStackParamList = {
 const Stack = createNativeStackNavigator<BillingStackParamList>();
 export function BillingNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator id="billing-stack" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="InvoiceList" component={InvoiceListScreen} />
       <Stack.Screen name="InvoiceCreate" component={InvoiceCreateScreen} />
       <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} />
     </Stack.Navigator>
   );
 }
+

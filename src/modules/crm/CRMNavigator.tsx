@@ -11,10 +11,11 @@ export type CRMStackParamList = {
 const Stack = createNativeStackNavigator<CRMStackParamList>();
 export function CRMNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator id="crm-stack" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="CRMList" component={CRMListScreen} />
       <Stack.Screen name="CreateClient" component={CreateClientScreen} />
       <Stack.Screen name="ClientDetails" component={ClientDetailsScreen} />
     </Stack.Navigator>
   );
 }
+

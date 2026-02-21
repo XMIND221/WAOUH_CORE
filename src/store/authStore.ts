@@ -32,17 +32,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    set({ user: data.user, session: data.session as Session });
+    set({ user: data.user, session: data.session as Session, isLoading: true });
     await get().fetchUserProfile();
     return { requiresPasswordChange: get().userProfile?.must_change_password || false };
   },
   signOut: async () => {
     await supabase.auth.signOut();
-    set({ user: null, session: null, userProfile: null, companyId: null });
+    set({ user: null, session: null, userProfile: null, companyId: null, isLoading: false });
   },
   logout: async () => {
     await supabase.auth.signOut();
-    set({ user: null, session: null, userProfile: null, companyId: null });
+    set({ user: null, session: null, userProfile: null, companyId: null, isLoading: false });
   },
   bootstrap: async () => {
     set({ isLoading: true });
@@ -71,11 +71,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ userProfile: null, companyId: null, isLoading: false });
         return;
       }
-      // 1) users
       const usersRes = await supabase.from("users").select("*").eq("id", user.id).single();
       let profile: any = usersRes.data;
       let err: any = usersRes.error;
-      // 2) fallback user_profiles
       if (err || !profile) {
         const pRes = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
         profile = pRes.data;
@@ -111,11 +109,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }));
   },
 }));
-supabase.auth.onAuthStateChange(async (event, session) => {
+supabase.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
-    useAuthStore.setState({ user: session.user, session: session as Session });
+    useAuthStore.setState({ user: session.user, session: session as Session, isLoading: true });
     await useAuthStore.getState().fetchUserProfile();
-  } else if (event === "SIGNED_OUT") {
+  } else {
     useAuthStore.setState({
       user: null,
       session: null,

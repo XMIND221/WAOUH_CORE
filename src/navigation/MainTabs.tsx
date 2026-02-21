@@ -12,7 +12,7 @@ import { Text } from "react-native";
 const Tab = createBottomTabNavigator<MainTabsParamList>();
 export function MainTabs() {
   return (
-    <Tab.Navigator
+    <Tab.Navigator id="main-tabs"
       screenOptions={{
         headerShown: false,
         tabBarStyle: { backgroundColor: "#1f2937" },
