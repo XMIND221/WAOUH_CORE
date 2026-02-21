@@ -11,7 +11,9 @@ export function ConversationListItem({ conversation, onPress }: Props) {
   const userId = useUserId();
   const displayName = getConversationName(conversation, userId);
   const lastMessageText = conversation.last_message?.content || "Aucun message";
-  const hasUnread = (conversation.unread_count || 0) > 0;
+  const unread = conversation.unread_count || 0;
+  const hasUnread = unread > 0;
+  const unreadLabel = unread > 99 ? "99+" : String(unread);
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.avatar}>
@@ -22,7 +24,7 @@ export function ConversationListItem({ conversation, onPress }: Props) {
           <Text style={styles.name}>{displayName}</Text>
           {hasUnread && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{conversation.unread_count}</Text>
+              <Text style={styles.badgeText}>{unreadLabel}</Text>
             </View>
           )}
         </View>
@@ -34,10 +36,7 @@ export function ConversationListItem({ conversation, onPress }: Props) {
   );
 }
 function getConversationName(conversation: Conversation, userId: string | null): string {
-  if (conversation.type === "group" && conversation.name) {
-    return conversation.name;
-  }
-  // Direct: show other person's name
+  if (conversation.type === "group" && conversation.name) return conversation.name;
   const otherParticipant = conversation.participants?.find((p) => p.user_id !== userId);
   if (otherParticipant?.user) {
     const { first_name, last_name, email } = otherParticipant.user;

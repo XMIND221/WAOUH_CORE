@@ -1,4 +1,6 @@
-﻿import React, { useEffect } from "react";
+﻿import { ChatScreen } from "../features/messages/screens/ChatScreen";
+import { MessagesListScreen } from "../features/messages/screens/MessagesListScreen";
+import React, { useEffect } from "react";
 import { MessagingScreen } from "../features/messaging/MessagingScreen";
 import { InvoicesScreen } from "../features/invoices/InvoicesScreen";
 import { TimelineScreen } from "../features/timeline/TimelineScreen";
@@ -67,12 +69,32 @@ export default function RootNavigator() {
                 <Stack.Screen name="AuditLogs" component={AuditLogsScreen} options={{ headerShown: true, title: "Audit Logs" }} />
               </>
             )}
-          </Stack.Navigator>
+                <Stack.Screen
+        name="Messages"
+        component={MessagesListScreen}
+        options={{ headerShown: true, title: "Messages" }}
+      />
+      <Stack.Screen
+        name="ChatScreen"
+        component={ChatScreen}
+        options={{ headerShown: true, title: "Conversation" }}
+      />
+    </Stack.Navigator>
         </RoleProvider>
       ) : (
         <Stack.Navigator id="root-guest-stack" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
-        </Stack.Navigator>
+              <Stack.Screen
+        name="Messages"
+        component={MessagesListScreen}
+        options={{ headerShown: true, title: "Messages" }}
+      />
+      <Stack.Screen
+        name="ChatScreen"
+        component={ChatScreen}
+        options={{ headerShown: true, title: "Conversation" }}
+      />
+    </Stack.Navigator>
       )}
     </NavigationContainer>
   );
@@ -85,3 +107,4 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9fafb",
   },
 });
+

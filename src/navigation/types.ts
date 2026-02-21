@@ -7,6 +7,7 @@
   Dashboard: undefined;
   CRM: undefined;
   Messages: undefined;
+  ChatScreen: { conversationId: string };
   Invoices: undefined;
   Timeline: undefined;
   AuditLogs: undefined;
@@ -17,6 +18,7 @@ export type MainTabsParamList = {
   Dashboard: undefined;
   CRM: undefined;
   Messages: undefined;
+  ChatScreen: { conversationId: string };
   Invoices: undefined;
   Timeline: undefined;
   AuditLogs: undefined;
