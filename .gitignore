@@ -21,3 +21,6 @@ yarn-error.*
 *.tsbuildinfo
 /ios
 /android
+.backup/
+*.bak
+npx
