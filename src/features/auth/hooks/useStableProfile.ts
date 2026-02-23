@@ -1,93 +1,87 @@
 ﻿// filepath: d:\WAOUH_CORE\waouh_core_app\src\features\auth\hooks\useStableProfile.ts
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import type { UserRole } from "../../../types/auth.types";
 type StableProfile = {
   id: string;
   email: string;
-  company_id: string;
-  role: UserRole;
+  company_id: string | null;
+  role: UserRole | null;
   pin_initialized: boolean;
   must_change_pin: boolean;
 } & Record<string, unknown>;
-type StableProfileState = {
-  profile: StableProfile | null;
-  companyId: string | null;
-  role: UserRole | null;
-  loading: boolean;
-  error: string | null;
-};
-type EnsureMyProfileRpc = {
+type UseStableProfileOptions = { enabled?: boolean; userId?: string | null };
+type UserProfileRow = {
   id: string;
   email?: string | null;
-  company_id: string | null;
-  role: string | null;
-  pin_initialized: boolean | null;
-  must_change_pin: boolean | null;
+  company_id?: string | null;
+  role?: string | null;
+  pin_initialized?: boolean | null;
+  must_change_pin?: boolean | null;
 } & Record<string, unknown>;
-const DEFAULT_ROLE = "employee" as UserRole;
 function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown profile error";
+  return error instanceof Error ? error.message : "Profile fetch failed";
 }
-function normalizeRpcRow(data: unknown): EnsureMyProfileRpc | null {
-  if (Array.isArray(data)) return (data[0] as EnsureMyProfileRpc) ?? null;
-  if (typeof data === "object" && data !== null) return data as EnsureMyProfileRpc;
-  return null;
-}
-export function useStableProfile() {
-  const [state, setState] = useState<StableProfileState>({
-    profile: null,
-    companyId: null,
-    role: null,
-    loading: true,
-    error: null,
-  });
-  const load = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: null }));
+export function useStableProfile(options: UseStableProfileOptions = {}) {
+  const { enabled = true, userId = null } = options;
+  const mountedRef = useRef(true);
+  const [profile, setProfile] = useState<StableProfile | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [loading, setLoading] = useState<boolean>(Boolean(enabled));
+  const [error, setError] = useState<string | null>(null);
+  const loadProfile = useCallback(async () => {
+    if (!enabled) {
+      setProfile(null); setCompanyId(null); setRole(null); setError(null); setLoading(false);
+      return;
+    }
+    setLoading(true); setError(null);
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      const authUser = userData.user;
-      if (!authUser) {
-        setState({ profile: null, companyId: null, role: null, loading: false, error: null });
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+      if (getUserError) throw getUserError;
+      const currentUserId = userId ?? user?.id ?? null;
+      if (!currentUserId) {
+        if (!mountedRef.current) return;
+        setProfile(null); setCompanyId(null); setRole(null);
         return;
       }
-      const { data, error } = await supabase.rpc("ensure_my_profile");
-      if (error) throw error;
-      const row = normalizeRpcRow(data);
-      if (!row || !row.company_id) {
-        throw new Error("Profile company_id missing");
+      const { data, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("id", currentUserId)
+        .maybeSingle<UserProfileRow>();
+      if (profileError) throw profileError;
+      if (!mountedRef.current) return;
+      if (!data) {
+        setProfile(null); setCompanyId(null); setRole(null);
+        return;
       }
-      const profile: StableProfile = {
-        ...row,
-        id: String(row.id),
-        email: typeof row.email === "string" && row.email.length > 0 ? row.email : String(authUser.email ?? ""),
-        company_id: String(row.company_id),
-        role: (row.role ?? DEFAULT_ROLE) as UserRole,
-        pin_initialized: Boolean(row.pin_initialized ?? false),
-        must_change_pin: Boolean(row.must_change_pin ?? false),
+      const normalized: StableProfile = {
+        ...data,
+        id: String(data.id),
+        email: String(data.email ?? user?.email ?? ""),
+        company_id: data.company_id ?? null,
+        role: (data.role ?? null) as UserRole | null,
+        pin_initialized: Boolean(data.pin_initialized ?? false),
+        must_change_pin: Boolean(data.must_change_pin ?? false),
       };
-      setState({
-        profile,
-        companyId: profile.company_id,
-        role: profile.role,
-        loading: false,
-        error: null,
-      });
+      setProfile(normalized);
+      setCompanyId(normalized.company_id);
+      setRole(normalized.role);
     } catch (e: unknown) {
-      setState({
-        profile: null,
-        companyId: null,
-        role: DEFAULT_ROLE,
-        loading: false,
-        error: toErrorMessage(e),
-      });
+      if (!mountedRef.current) return;
+      setError(toErrorMessage(e));
+      setProfile(null); setCompanyId(null); setRole(null);
     } finally {
-      setState((s) => ({ ...s, loading: false }));
+      if (mountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [enabled, userId]);
   useEffect(() => {
-    void load();
-  }, [load]);
-  return useMemo(() => ({ ...state, reload: load }), [state, load]);
+    mountedRef.current = true;
+    void loadProfile();
+    return () => { mountedRef.current = false; };
+  }, [loadProfile]);
+  return useMemo(() => ({
+    profile, companyId, role, loading, error, reload: loadProfile
+  }), [profile, companyId, role, loading, error, loadProfile]);
 }
