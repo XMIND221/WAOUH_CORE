@@ -1,14 +1,16 @@
-﻿import { create } from "zustand";
+﻿/* filepath: d:\WAOUH_CORE\waouh_core_app\src\store\authStore.ts */
+import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import type { UserRole, UserProfile } from "../types/auth.types";
 export type { UserRole, UserProfile };
+type AuthUser = { id: string; email?: string | null };
 interface Session {
-  user: { id: string; email?: string };
+  user: AuthUser;
   access_token: string;
   expires_at?: number;
 }
 interface AuthState {
-  user: any | null;
+  user: AuthUser | null;
   session: Session | null;
   userProfile: UserProfile | null;
   companyId: string | null;
@@ -17,11 +19,16 @@ interface AuthState {
   signOut: () => Promise<void>;
   logout: () => Promise<void>;
   bootstrap: () => Promise<void>;
-  setUser: (user: any) => void;
+  setUser: (user: AuthUser | null) => void;
   setUserProfile: (profile: UserProfile | null) => void;
   fetchUserProfile: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   clearPasswordChangeFlag: () => Promise<void>;
+}
+function asRow(data: unknown): (UserProfile & { company_id: string | null }) | null {
+  if (Array.isArray(data)) return (data[0] as UserProfile & { company_id: string | null }) ?? null;
+  if (typeof data === "object" && data !== null) return data as UserProfile & { company_id: string | null };
+  return null;
 }
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -32,9 +39,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    set({ user: data.user, session: data.session as Session, isLoading: true });
+    set({ user: data.user ? { id: data.user.id, email: data.user.email } : null, session: data.session as Session, isLoading: true });
     await get().fetchUserProfile();
-    return { requiresPasswordChange: get().userProfile?.must_change_password || false };
+    return { requiresPasswordChange: Boolean(get().userProfile?.must_change_password) };
   },
   signOut: async () => {
     await supabase.auth.signOut();
@@ -52,46 +59,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: null, session: null, userProfile: null, companyId: null, isLoading: false });
         return;
       }
-      set({ user: session.user, session: session as Session });
+      set({ user: { id: session.user.id, email: session.user.email }, session: session as Session });
       await get().fetchUserProfile();
-    } catch (e) {
-      console.error("bootstrap error:", e);
+    } finally {
       set({ isLoading: false });
     }
   },
   setUser: (user) => set({ user }),
-  setUserProfile: (profile) => set({
-    userProfile: profile,
-    companyId: profile?.company_id ?? null,
-  }),
+  setUserProfile: (profile) => set({ userProfile: profile, companyId: profile?.company_id ?? null }),
   fetchUserProfile: async () => {
+    set({ isLoading: true });
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
         set({ userProfile: null, companyId: null, isLoading: false });
         return;
       }
-      const usersRes = await supabase.from("users").select("*").eq("id", user.id).single();
-      let profile: any = usersRes.data;
-      let err: any = usersRes.error;
-      if (err || !profile) {
-        const pRes = await supabase.from("user_profiles").select("*").eq("id", user.id).single();
-        profile = pRes.data;
-        err = pRes.error;
-      }
-      if (err || !profile) {
-        console.error("fetchUserProfile error:", err?.message ?? "profile not found");
-        set({ user, userProfile: null, companyId: null, isLoading: false });
-        return;
-      }
+      const { data, error } = await supabase.rpc("ensure_my_profile");
+      if (error) throw error;
+      const row = asRow(data);
+      const companyId = row?.company_id ?? null;
       set({
-        user,
-        userProfile: profile as UserProfile,
-        companyId: profile.company_id ?? null,
+        user: { id: userData.user.id, email: userData.user.email },
+        userProfile: (row as UserProfile) ?? null,
+        companyId,
         isLoading: false,
       });
-    } catch (e) {
-      console.error("fetchUserProfile exception:", e);
+    } catch {
+      set({ isLoading: false });
+    } finally {
       set({ isLoading: false });
     }
   },
@@ -104,22 +100,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!userId) return;
     const { error } = await supabase.from("users").update({ must_change_password: false }).eq("id", userId);
     if (error) throw error;
-    set((s) => ({
-      userProfile: s.userProfile ? { ...s.userProfile, must_change_password: false } : null,
-    }));
+    set((s) => ({ userProfile: s.userProfile ? { ...s.userProfile, must_change_password: false } : null }));
   },
 }));
 supabase.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
-    useAuthStore.setState({ user: session.user, session: session as Session, isLoading: true });
+    useAuthStore.setState({ user: { id: session.user.id, email: session.user.email }, session: session as Session, isLoading: true });
     await useAuthStore.getState().fetchUserProfile();
   } else {
-    useAuthStore.setState({
-      user: null,
-      session: null,
-      userProfile: null,
-      companyId: null,
-      isLoading: false,
-    });
+    useAuthStore.setState({ user: null, session: null, userProfile: null, companyId: null, isLoading: false });
   }
 });

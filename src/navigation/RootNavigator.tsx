@@ -1,7 +1,6 @@
 ﻿import { ChatScreen } from "../features/messages/screens/ChatScreen";
 import { MessagesListScreen } from "../features/messages/screens/MessagesListScreen";
 import React, { useEffect } from "react";
-import { MessagingScreen } from "../features/messaging/MessagingScreen";
 import { InvoicesScreen } from "../features/invoices/InvoicesScreen";
 import { TimelineScreen } from "../features/timeline/TimelineScreen";
 import { AuditLogsScreen } from "../features/audit/AuditLogsScreen";
@@ -63,38 +62,27 @@ export default function RootNavigator() {
                   component={AdminScreen}
                   options={{ headerShown: true, title: "Administration" }}
                 />
-                <Stack.Screen name="Messages" component={MessagingScreen} options={{ headerShown: true, title: "Messages" }} />
+                <Stack.Screen
+                  name="Messages"
+                  component={MessagesListScreen}
+                  options={{ headerShown: true, title: "Messages" }}
+                />
+                <Stack.Screen
+                  name="ChatScreen"
+                  component={ChatScreen}
+                  options={{ headerShown: true, title: "Conversation" }}
+                />
                 <Stack.Screen name="Invoices" component={InvoicesScreen} options={{ headerShown: true, title: "Factures" }} />
                 <Stack.Screen name="Timeline" component={TimelineScreen} options={{ headerShown: true, title: "Timeline" }} />
                 <Stack.Screen name="AuditLogs" component={AuditLogsScreen} options={{ headerShown: true, title: "Audit Logs" }} />
               </>
             )}
-                <Stack.Screen
-        name="Messages"
-        component={MessagesListScreen}
-        options={{ headerShown: true, title: "Messages" }}
-      />
-      <Stack.Screen
-        name="ChatScreen"
-        component={ChatScreen}
-        options={{ headerShown: true, title: "Conversation" }}
-      />
-    </Stack.Navigator>
+          </Stack.Navigator>
         </RoleProvider>
       ) : (
         <Stack.Navigator id="root-guest-stack" screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen
-        name="Messages"
-        component={MessagesListScreen}
-        options={{ headerShown: true, title: "Messages" }}
-      />
-      <Stack.Screen
-        name="ChatScreen"
-        component={ChatScreen}
-        options={{ headerShown: true, title: "Conversation" }}
-      />
-    </Stack.Navigator>
+        </Stack.Navigator>
       )}
     </NavigationContainer>
   );
@@ -107,4 +95,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9fafb",
   },
 });
-
