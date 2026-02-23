@@ -24,3 +24,6 @@ yarn-error.*
 .backup/
 *.bak
 npx
+# backups
+*.bak-phase*
+*.bak-*
