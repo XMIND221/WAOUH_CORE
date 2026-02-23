@@ -2,10 +2,19 @@
 import { supabase } from "../../../lib/supabase";
 import { useAuthStore } from "../../../store/authStore";
 import { useStableProfile } from "./useStableProfile";
+import { logSecurityEvent } from "../../security/hooks/usePinSecurity";
 type AuthUser = { id: string; email?: string | null };
 type AuthSession = { access_token: string; expires_at?: number; user: AuthUser };
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Authentication failed";
+}
+async function resolveCompanyId(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("user_profiles")
+    .select("company_id")
+    .eq("id", userId)
+    .maybeSingle<{ company_id: string | null }>();
+  return data?.company_id ?? null;
 }
 export function useAuth() {
   const mountedRef = useRef(true);
@@ -51,33 +60,51 @@ export function useAuth() {
       setLoading(false);
     }
   }, [setAuthState]);
-  const signIn = useCallback(async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) throw signInError;
-      if (data.session?.user) {
-        setAuthState(
-          { id: data.session.user.id, email: data.session.user.email },
-          data.session as AuthSession
-        );
-      } else {
-        setAuthState(null, null);
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        if (data.session?.user) {
+          const authUser = { id: data.session.user.id, email: data.session.user.email };
+          setAuthState(authUser, data.session as AuthSession);
+          const companyId = await resolveCompanyId(authUser.id);
+          await logSecurityEvent({
+            eventType: "LOGIN_SUCCESS",
+            companyId,
+            actorId: authUser.id,
+            actorEmail: authUser.email ?? null,
+            message: "Connexion réussie",
+            metadata: { source: "useAuth.signIn" },
+          });
+        } else {
+          setAuthState(null, null);
+        }
+        return { ok: true as const, error: null };
+      } catch (e: unknown) {
+        const message = toErrorMessage(e);
+        if (mountedRef.current) {
+          setError(message);
+          setAuthState(null, null);
+        }
+        await logSecurityEvent({
+          eventType: "LOGIN_FAILURE",
+          companyId: null,
+          actorId: null,
+          actorEmail: email,
+          message: "Échec de connexion",
+          metadata: { source: "useAuth.signIn", error: message },
+        });
+        return { ok: false as const, error: message };
+      } finally {
+        if (!mountedRef.current) return;
+        setLoading(false);
       }
-      return { ok: true as const, error: null };
-    } catch (e: unknown) {
-      const message = toErrorMessage(e);
-      if (mountedRef.current) {
-        setError(message);
-        setAuthState(null, null);
-      }
-      return { ok: false as const, error: message };
-    } finally {
-      if (!mountedRef.current) return;
-      setLoading(false);
-    }
-  }, [setAuthState]);
+    },
+    [setAuthState]
+  );
   const signOut = useCallback(async () => {
     setLoading(true);
     setError(null);
